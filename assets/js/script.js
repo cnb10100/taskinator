@@ -281,8 +281,6 @@ var loadTasks = function () {
     }
 
     taskIdCounter++;
-
-    console.log(listItemEl);
   }
 };
 
