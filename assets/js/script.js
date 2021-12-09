@@ -66,8 +66,7 @@ var createTaskEl = function (taskDataObj) {
   // increase task counter for next unique id
   taskIdCounter++;
 
-  console.log(taskDataObj);
-  console.log(taskDataObj.status);
+  saveTasks();
 };
 
 var createTaskActions = function (taskId) {
@@ -133,6 +132,8 @@ var completeEditTask = function (taskName, taskType, taskId) {
   formEl.removeAttribute("data-task-id");
   // update formEl button to go back to saying "Add Task" instead of "Edit Task"
   formEl.querySelector("#save-task").textContent = "Add Task";
+
+  saveTasks();
 };
 
 var taskButtonHandler = function (event) {
@@ -151,8 +152,6 @@ var taskButtonHandler = function (event) {
 };
 
 var taskStatusChangeHandler = function (event) {
-  console.log(event.target.value);
-
   // find task list item based on event.target's data-task-id attribute
   var taskId = event.target.getAttribute("data-task-id");
 
@@ -177,11 +176,11 @@ var taskStatusChangeHandler = function (event) {
       tasks[i].status = statusValue;
     }
   }
+
+  saveTasks();
 };
 
 var editTask = function (taskId) {
-  console.log(taskId);
-
   // get task list item element
   var taskSelected = document.querySelector(
     ".task-item[data-task-id='" + taskId + "']"
@@ -189,10 +188,7 @@ var editTask = function (taskId) {
 
   // get content from task name and type
   var taskName = taskSelected.querySelector("h3.task-name").textContent;
-  console.log(taskName);
-
   var taskType = taskSelected.querySelector("span.task-type").textContent;
-  console.log(taskType);
 
   // write values of taskname and taskType to form to be edited
   document.querySelector("input[name='task-name']").value = taskName;
@@ -205,7 +201,6 @@ var editTask = function (taskId) {
 };
 
 var deleteTask = function (taskId) {
-  console.log(taskId);
   // find task list element with taskId value and remove it
   var taskSelected = document.querySelector(
     ".task-item[data-task-id='" + taskId + "']"
@@ -225,6 +220,70 @@ var deleteTask = function (taskId) {
 
   // reassign tasks array to be the same as updatedTaskArr
   tasks = updatedTaskArr;
+
+  saveTasks();
+};
+
+var saveTasks = function () {
+  localStorage.setItem("tasks", JSON.stringify(tasks));
+};
+
+/*
+Gets task items from localStorage.
+
+Converts tasks from the string format back into an array of objects.
+
+Iterates through a tasks array and creates task elements on the page from it.
+*/
+
+var loadTasks = function () {
+  tasks = localStorage.getItem("tasks");
+
+  if (tasks === null) {
+    tasks = [];
+    return false;
+  }
+
+  tasks = JSON.parse(tasks);
+
+  for (var i = 0; i < tasks.length; i++) {
+    tasks[i].id = taskIdCounter;
+    var listItemEl = document.createElement("li");
+    listItemEl.className = "task-item";
+    listItemEl.setAttribute("data-task-id", tasks[i].id);
+    var taskInfoEl = document.createElement("div");
+    taskInfoEl.className = "task-info";
+    taskInfoEl.innerHTML =
+      "<h3 class='task-name'>" +
+      tasks[i].name +
+      "</h3><span class='task-type'>" +
+      tasks[i].type +
+      "</span>";
+    listItemEl.appendChild(taskInfoEl);
+    var taskActionsEl = createTaskActions(tasks[i].id);
+    listItemEl.appendChild(taskActionsEl);
+
+    if (tasks[i].status === "to do") {
+      listItemEl.querySelector(
+        "select[name='status-change']"
+      ).selectedIndex = 0;
+      tasksToDoEl.appendChild(listItemEl);
+    } else if (tasks[i].status === "in progress") {
+      listItemEl.querySelector(
+        "select[name='status-change']"
+      ).selectedIndex = 1;
+      tasksInProgressEl.appendChild(listItemEl);
+    } else if (tasks[i].status === "complete") {
+      listItemEl.querySelector(
+        "select[name='status-change']"
+      ).selectedIndex = 2;
+      tasksCompletedEl.appendChild(listItemEl);
+    }
+
+    taskIdCounter++;
+
+    console.log(listItemEl);
+  }
 };
 
 // Create a new task
@@ -235,3 +294,5 @@ pageContentEl.addEventListener("click", taskButtonHandler);
 
 // for changing the status
 pageContentEl.addEventListener("change", taskStatusChangeHandler);
+
+loadTasks();
